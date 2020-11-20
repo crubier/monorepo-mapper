@@ -31,13 +31,13 @@ const argv = yargs
 		},
 		devDeps: {
 			alias: 'dev-deps',
-			default: true,
+			default: false,
 			description: 'Include dev dependencies',
 			type: 'boolean',
 		},
 		peerDeps: {
 			alias: 'peer-deps',
-			default: true,
+			default: false,
 			description: 'Include peer dependencies',
 			type: 'boolean',
 		},
@@ -70,7 +70,7 @@ const argv = yargs
 		},
 		focusDepth: {
 			alias: 'focus-depth',
-			default: 20,
+			default: 1,
 			description: 'Depth of graph exploration from focus',
 			type: 'number',
 		},
@@ -121,9 +121,17 @@ type Node = {
 
 function computeTransitive(
 	packages: Package[]
-): { pkgMap: Map<string, Node>; distanceMap: Map<string, number> } {
+): {
+	pkgMap: Map<string, Node>;
+	normalDistanceMap: Map<string, number>;
+	peerDistanceMap: Map<string, number>;
+	devDistanceMap: Map<string, number>;
+} {
 	const pkgMap: Map<string, Node> = new Map();
-	const distanceMap: Map<string, number> = new Map();
+	const normalDistanceMap: Map<string, number> = new Map();
+	const peerDistanceMap: Map<string, number> = new Map();
+	const devDistanceMap: Map<string, number> = new Map();
+
 	// Init structure
 	packages.forEach((pkg) => {
 		if (accept(pkg)) {
@@ -142,7 +150,9 @@ function computeTransitive(
 				devChildren: new Set(),
 				normalChildren: new Set(),
 			});
-			distanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+			normalDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+			peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+			devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
 		}
 	});
 
@@ -152,7 +162,8 @@ function computeTransitive(
 			if (pkgMap.has(parentName)) {
 				node.normalParents.add(pkgMap.get(parentName) as Node);
 				node.normalAncestors.add(pkgMap.get(parentName) as Node);
-				distanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+				normalDistanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+				normalDistanceMap.set(`${parentName}<->${node.pkg.name}`, 1);
 			}
 		});
 		Object.keys(node.pkg.peerDependencies ?? {}).forEach(
@@ -160,7 +171,8 @@ function computeTransitive(
 				if (pkgMap.has(parentName)) {
 					node.peerParents.add(pkgMap.get(parentName) as Node);
 					node.peerAncestors.add(pkgMap.get(parentName) as Node);
-					distanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+					peerDistanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+					peerDistanceMap.set(`${parentName}<->${node.pkg.name}`, 1);
 				}
 			}
 		);
@@ -169,7 +181,8 @@ function computeTransitive(
 				if (pkgMap.has(parentName)) {
 					node.devParents.add(pkgMap.get(parentName) as Node);
 					node.devAncestors.add(pkgMap.get(parentName) as Node);
-					distanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+					devDistanceMap.set(`${node.pkg.name}<->${parentName}`, 1);
+					devDistanceMap.set(`${parentName}<->${node.pkg.name}`, 1);
 				}
 			}
 		);
@@ -179,27 +192,12 @@ function computeTransitive(
 	pkgMap.forEach((node) => {
 		node.normalParents.forEach((parent: Node) => {
 			parent.normalChildren.add(node);
-			distanceMap.set(
-				`${parent.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${parent.pkg.name}`) as number)
-			);
 		});
 		node.peerParents.forEach((parent: Node) => {
 			parent.peerChildren.add(node);
-			distanceMap.set(
-				`${parent.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${parent.pkg.name}`) as number)
-			);
 		});
 		node.devParents.forEach((parent: Node) => {
 			parent.devChildren.add(node);
-			distanceMap.set(
-				`${parent.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${parent.pkg.name}`) as number)
-			);
 		});
 	});
 
@@ -221,17 +219,13 @@ function computeTransitive(
 						node.normalAncestors.add(a);
 						changed = true;
 					}
-					if (
-						!distanceMap.has(`${node.pkg.name}<->${a}`) ||
-						(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1 <
-							(distanceMap.get(`${node.pkg.name}<->${a}`) as number)
-					) {
-						distanceMap.set(
-							`${node.pkg.name}<->${a}`,
-							(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1
-						);
-						changed = true;
-					}
+					changed = updateDistanceMap(
+						normalDistanceMap,
+						node,
+						a,
+						ancestor,
+						changed
+					);
 				});
 			});
 			node.devAncestors.forEach((ancestor: Node) => {
@@ -243,17 +237,13 @@ function computeTransitive(
 						node.devAncestors.add(a);
 						changed = true;
 					}
-					if (
-						!distanceMap.has(`${node.pkg.name}<->${a}`) ||
-						(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1 <
-							(distanceMap.get(`${node.pkg.name}<->${a}`) as number)
-					) {
-						distanceMap.set(
-							`${node.pkg.name}<->${a}`,
-							(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1
-						);
-						changed = true;
-					}
+					changed = updateDistanceMap(
+						devDistanceMap,
+						node,
+						a,
+						ancestor,
+						changed
+					);
 				});
 			});
 			node.peerAncestors.forEach((ancestor: Node) => {
@@ -265,17 +255,13 @@ function computeTransitive(
 						node.peerAncestors.add(a);
 						changed = true;
 					}
-					if (
-						!distanceMap.has(`${node.pkg.name}<->${a}`) ||
-						(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1 <
-							(distanceMap.get(`${node.pkg.name}<->${a}`) as number)
-					) {
-						distanceMap.set(
-							`${node.pkg.name}<->${a}`,
-							(distanceMap.get(`${node.pkg.name}<->${ancestor}`) as number) + 1
-						);
-						changed = true;
-					}
+					changed = updateDistanceMap(
+						peerDistanceMap,
+						node,
+						a,
+						ancestor,
+						changed
+					);
 				});
 			});
 		});
@@ -286,31 +272,42 @@ function computeTransitive(
 	pkgMap.forEach((node) => {
 		node.normalAncestors.forEach((ancestor: Node) => {
 			ancestor.normalDescendants.add(node);
-			distanceMap.set(
-				`${ancestor.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${ancestor.pkg.name}`) as number)
-			);
 		});
 		node.peerAncestors.forEach((ancestor: Node) => {
 			ancestor.peerDescendants.add(node);
-			distanceMap.set(
-				`${ancestor.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${ancestor.pkg.name}`) as number)
-			);
 		});
 		node.devAncestors.forEach((ancestor: Node) => {
 			ancestor.devDescendants.add(node);
-			distanceMap.set(
-				`${ancestor.pkg.name}<->${node.pkg.name}`,
-				-1 *
-					(distanceMap.get(`${node.pkg.name}<->${ancestor.pkg.name}`) as number)
-			);
 		});
 	});
 
-	return { pkgMap, distanceMap };
+	return { pkgMap, normalDistanceMap, peerDistanceMap, devDistanceMap };
+}
+
+function updateDistanceMap(
+	distanceMap: Map<string, number>,
+	node: Node,
+	a: Node,
+	ancestor: Node,
+	changed: boolean
+) {
+	if (
+		!distanceMap.has(`${node.pkg.name}<->${a.pkg.name}`) ||
+		(distanceMap.get(`${node.pkg.name}<->${ancestor.pkg.name}`) as number) + 1 <
+			(distanceMap.get(`${node.pkg.name}<->${a.pkg.name}`) as number) ||
+		!distanceMap.has(`${a.pkg.name}<->${node.pkg.name}`) ||
+		(distanceMap.get(`${ancestor.pkg.name}<->${node.pkg.name}`) as number) + 1 <
+			(distanceMap.get(`${a.pkg.name}<->${node.pkg.name}`) as number)
+	) {
+		const dMin = Math.min(
+			distanceMap.get(`${node.pkg.name}<->${ancestor.pkg.name}`) as number,
+			distanceMap.get(`${ancestor.pkg.name}<->${node.pkg.name}`) as number
+		);
+		distanceMap.set(`${node.pkg.name}<->${a.pkg.name}`, dMin + 1);
+		distanceMap.set(`${a.pkg.name}<->${node.pkg.name}`, dMin + 1);
+		changed = true;
+	}
+	return changed;
 }
 
 function isInFocus(
@@ -349,12 +346,30 @@ getPackages().then((packages) => {
 		g.setGraphVizPath(argv.graphvizDirectory);
 	}
 
-	const { pkgMap, distanceMap } = computeTransitive(packages.filter(accept));
+	const {
+		pkgMap,
+		normalDistanceMap,
+		peerDistanceMap,
+		devDistanceMap,
+	} = computeTransitive(packages.filter(accept));
 
-	const focusNode = pkgMap.get(argv.focus ?? '');
+	let focusNode: Node | undefined;
+	if (!argv.focus) {
+		focusNode = undefined;
+	} else if (pkgMap.get(argv.focus)) {
+		focusNode = pkgMap.get(argv.focus);
+	} else {
+		throw new Error(`The package ${argv.focus} does not exist`);
+	}
 
 	pkgMap.forEach((node) => {
-		if (!isInFocus(focusNode, node, distanceMap)) {
+		if (
+			!(
+				(argv.deps && isInFocus(focusNode, node, normalDistanceMap)) ||
+				(argv.peerDeps && isInFocus(focusNode, node, peerDistanceMap)) ||
+				(argv.devDeps && isInFocus(focusNode, node, devDistanceMap))
+			)
+		) {
 			return;
 		}
 
@@ -370,23 +385,10 @@ getPackages().then((packages) => {
 
 		if (argv.deps) {
 			node.normalParents.forEach((parent) => {
-				if (!isInFocus(focusNode, parent, distanceMap)) {
+				if (!isInFocus(focusNode, parent, normalDistanceMap)) {
 					return;
 				}
 				const edge = g.addEdge(graphVizNode, parent.pkg.name);
-				if (focusNode && (focusNode === node || focusNode === parent)) {
-					edge.set('color', 'red');
-				}
-			});
-		}
-
-		if (argv.devDeps) {
-			node.devParents.forEach((parent) => {
-				if (!isInFocus(focusNode, parent, distanceMap)) {
-					return;
-				}
-				const edge = g.addEdge(graphVizNode, parent.pkg.name);
-				edge.set('style', 'dashed');
 				if (focusNode && (focusNode === node || focusNode === parent)) {
 					edge.set('color', 'red');
 				}
@@ -395,11 +397,24 @@ getPackages().then((packages) => {
 
 		if (argv.peerDeps) {
 			node.peerParents.forEach((parent) => {
-				if (!isInFocus(focusNode, parent, distanceMap)) {
+				if (!isInFocus(focusNode, parent, peerDistanceMap)) {
 					return;
 				}
 				const edge = g.addEdge(graphVizNode, parent.pkg.name);
 				edge.set('style', 'dotted');
+				if (focusNode && (focusNode === node || focusNode === parent)) {
+					edge.set('color', 'red');
+				}
+			});
+		}
+
+		if (argv.devDeps) {
+			node.devParents.forEach((parent) => {
+				if (!isInFocus(focusNode, parent, devDistanceMap)) {
+					return;
+				}
+				const edge = g.addEdge(graphVizNode, parent.pkg.name);
+				edge.set('style', 'dashed');
 				if (focusNode && (focusNode === node || focusNode === parent)) {
 					edge.set('color', 'red');
 				}
