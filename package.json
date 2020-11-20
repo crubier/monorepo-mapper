@@ -22,7 +22,6 @@
   "dependencies": {
     "@lerna/project": "^3.18.0",
     "@types/cytoscape": "^3.14.9",
-    "cytoscape": "^3.17.0",
     "graphviz": "0.0.9",
     "yargs": "^15.4.1"
   },
