@@ -9,6 +9,7 @@ declare module '@lerna/package' {
 }
 
 declare module '@lerna/project' {
+	export { Package } from '@lerna/package';
 	import { Package } from '@lerna/package';
 	export function getPackages(): Promise<Package[]>;
 }
