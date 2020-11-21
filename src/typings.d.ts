@@ -5,6 +5,8 @@ declare module '@lerna/package' {
 		readonly name: string;
 		readonly peerDependencies?: { [name: string]: string };
 		readonly private: boolean;
+		readonly rootPath: string;
+		readonly location: string;
 	}
 }
 

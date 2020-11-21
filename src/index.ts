@@ -12,12 +12,6 @@ const argv = yargs
 	.version()
 	.alias('version', 'v')
 	.options({
-		graphvizCommand: {
-			alias: 'command',
-			default: 'dot',
-			description: 'Graphviz command to use.',
-			type: 'string',
-		},
 		graphvizDirectory: {
 			alias: 'graphviz',
 			description: 'Graphviz directory, if not in PATH.',
@@ -90,19 +84,6 @@ const includeRegex = argv.include ? new RegExp(argv.include) : null;
 
 const excludeRegex = argv.exclude ? new RegExp(argv.exclude) : null;
 
-function accept(pkg: Package): Package | undefined {
-	if (!((pkg.private && argv.private) || (!pkg.private && argv.public))) {
-		return;
-	}
-	if (includeRegex && !includeRegex.test(pkg.name)) {
-		return;
-	}
-	if (excludeRegex && excludeRegex.test(pkg.name)) {
-		return;
-	}
-	return pkg;
-}
-
 type Node = {
 	pkg: Package;
 	peerAncestors: Set<Node>;
@@ -134,26 +115,24 @@ function computeTransitive(
 
 	// Init structure
 	packages.forEach((pkg) => {
-		if (accept(pkg)) {
-			pkgMap.set(pkg.name, {
-				pkg,
-				peerAncestors: new Set(),
-				devAncestors: new Set(),
-				normalAncestors: new Set(),
-				peerDescendants: new Set(),
-				devDescendants: new Set(),
-				normalDescendants: new Set(),
-				peerParents: new Set(),
-				devParents: new Set(),
-				normalParents: new Set(),
-				peerChildren: new Set(),
-				devChildren: new Set(),
-				normalChildren: new Set(),
-			});
-			normalDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
-			peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
-			devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
-		}
+		pkgMap.set(pkg.name, {
+			pkg,
+			peerAncestors: new Set(),
+			devAncestors: new Set(),
+			normalAncestors: new Set(),
+			peerDescendants: new Set(),
+			devDescendants: new Set(),
+			normalDescendants: new Set(),
+			peerParents: new Set(),
+			devParents: new Set(),
+			normalParents: new Set(),
+			peerChildren: new Set(),
+			devChildren: new Set(),
+			normalChildren: new Set(),
+		});
+		normalDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+		peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+		devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
 	});
 
 	// Create parent links from package json
@@ -315,11 +294,30 @@ function isInFocus(
 	node: Node,
 	distanceMap: Map<string, number>
 ) {
-	if (!focusNode) {
+	if (node === focusNode) {
 		return true;
-	}
-	if (
-		node === focusNode ||
+	} else if (
+		(node.pkg.private && !argv.private) ||
+		(!node.pkg.private && !argv.public)
+	) {
+		return false;
+	} else if (
+		includeRegex &&
+		!includeRegex.test(node.pkg.name) &&
+		!node.pkg.name.includes(argv.include as string)
+	) {
+		return false;
+	} else if (
+		excludeRegex &&
+		!(
+			!excludeRegex.test(node.pkg.name) &&
+			!node.pkg.name.includes(argv.exclude as string)
+		)
+	) {
+		return false;
+	} else if (!focusNode) {
+		return true;
+	} else if (
 		(argv.deps && focusNode.normalAncestors.has(node)) ||
 		(argv.devDeps && focusNode.devAncestors.has(node)) ||
 		(argv.peerDeps && focusNode.peerAncestors.has(node)) ||
@@ -337,21 +335,32 @@ function isInFocus(
 	}
 }
 
-getPackages().then((packages) => {
-	const g = graphviz.digraph('G');
-
-	g.use = argv.graphvizCommand;
-
-	if (argv.graphvizDirectory) {
-		g.setGraphVizPath(argv.graphvizDirectory);
-	}
+async function main() {
+	const packages = await getPackages();
 
 	const {
 		pkgMap,
 		normalDistanceMap,
 		peerDistanceMap,
 		devDistanceMap,
-	} = computeTransitive(packages.filter(accept));
+	} = computeTransitive(packages);
+
+	const g = graphviz.digraph('G');
+
+	g.set('rankdir', 'RL');
+	// g.set('rankdir', 'BT');
+	// g.set('mode', 'hier');
+	// g.set('model', 'circuit');
+	// g.set('overlap', 'true');
+	// g.set('sep', '4');
+	// g.set('size', '7,10');
+
+	// g.use = 'neato';
+	g.use = 'dot';
+
+	if (argv.graphvizDirectory) {
+		g.setGraphVizPath(argv.graphvizDirectory);
+	}
 
 	let focusNode: Node | undefined;
 	if (!argv.focus) {
@@ -363,6 +372,7 @@ getPackages().then((packages) => {
 	}
 
 	pkgMap.forEach((node) => {
+		console.log(node.pkg.location);
 		if (
 			!(
 				(argv.deps && isInFocus(focusNode, node, normalDistanceMap)) ||
@@ -373,15 +383,20 @@ getPackages().then((packages) => {
 			return;
 		}
 
-		const graphVizNode: graphviz.Node = g.addNode(node.pkg.name);
+		const graphVizNode: graphviz.Node = g.addNode(node.pkg.name, {
+			labelURL: 'https://www.sterblue.com',
+		});
 
-		if (node.pkg.private) {
+		if (!node.pkg.private) {
 			graphVizNode.set('style', 'dashed');
 		}
 
 		if (node === focusNode) {
 			graphVizNode.set('color', 'red');
+			graphVizNode.set('style', 'bold');
 		}
+
+		// graphVizNode.set('labelURL', 'https://www.sterblue.com');
 
 		if (argv.deps) {
 			node.normalParents.forEach((parent) => {
@@ -391,6 +406,7 @@ getPackages().then((packages) => {
 				const edge = g.addEdge(graphVizNode, parent.pkg.name);
 				if (focusNode && (focusNode === node || focusNode === parent)) {
 					edge.set('color', 'red');
+					edge.set('style', 'bold');
 				}
 			});
 		}
@@ -404,6 +420,7 @@ getPackages().then((packages) => {
 				edge.set('style', 'dotted');
 				if (focusNode && (focusNode === node || focusNode === parent)) {
 					edge.set('color', 'red');
+					// edge.set('style', 'bold');
 				}
 			});
 		}
@@ -417,6 +434,7 @@ getPackages().then((packages) => {
 				edge.set('style', 'dashed');
 				if (focusNode && (focusNode === node || focusNode === parent)) {
 					edge.set('color', 'red');
+					// edge.set('style', 'bold');
 				}
 			});
 		}
@@ -441,4 +459,6 @@ getPackages().then((packages) => {
 			console.log(data);
 		}
 	}
-});
+}
+
+main();
