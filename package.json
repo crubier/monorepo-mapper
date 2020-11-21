@@ -21,12 +21,10 @@
   },
   "dependencies": {
     "@lerna/project": "^3.18.0",
-    "@types/cytoscape": "^3.14.9",
-    "graphviz": "0.0.9",
+    "graphviz-node": "^0.8.0",
     "yargs": "^15.4.1"
   },
   "devDependencies": {
-    "@types/graphviz": "0.0.30",
     "@types/yargs": "^15.0.2",
     "husky": "^4.2.1",
     "lint-staged": "^10.0.3",
