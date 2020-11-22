@@ -6,7 +6,7 @@ import { spawn } from 'child_process';
 import { writeFile } from 'fs';
 
 export function generateDot(
-	argv: Argv,
+	argv: Argv & { location: string },
 	pkgMap: Map<string, Node>,
 	normalDistanceMap: Map<string, number>,
 	peerDistanceMap: Map<string, number>,
@@ -50,7 +50,7 @@ export function generateDot(
 		}
 
 		const graphVizNode: GraphvizNode = g.addNode(node.pkg.name, {
-			URL: `file://${node.pkg.location}/dependency-graph.${argv.outputFormat}`,
+			URL: `file://${node.pkg.location}/${argv.outputPath}.${argv.outputFormat}`,
 		});
 
 		if (!node.pkg.private) {
@@ -116,29 +116,34 @@ export function generateDot(
 	});
 
 	try {
-		writeFile(`${argv.outputPath}.dot`, g.toDot(), { encoding: 'utf8' }, () => {
-			// g.render(argv.outputPath);
-			const ls = spawn(`${argv.graphvizDirectory}`, [
-				`${argv.outputPath}.dot`,
-				`-T${argv.outputFormat}`,
-				`-o`,
-				`${argv.outputPath}.${argv.outputFormat}`,
-			]);
+		writeFile(
+			`${argv.location}/${argv.outputPath}.dot`,
+			g.toDot(),
+			{ encoding: 'utf8' },
+			() => {
+				// g.render(argv.outputPath);
+				const ls = spawn(`${argv.graphvizDirectory}`, [
+					`${argv.location}/${argv.outputPath}.dot`,
+					`-T${argv.outputFormat}`,
+					`-o`,
+					`${argv.location}/${argv.outputPath}.${argv.outputFormat}`,
+				]);
 
-			ls.stdout.on('data', (data) => {
-				console.log(`stdout: ${data}`);
-			});
+				ls.stdout.on('data', (data) => {
+					console.log(`stdout: ${data}`);
+				});
 
-			ls.stderr.on('data', (data) => {
-				console.error(`stderr: ${data}`);
-			});
+				ls.stderr.on('data', (data) => {
+					console.error(`stderr: ${data}`);
+				});
 
-			ls.on('close', (code) => {
-				if (code !== 0) {
-					console.log(`child process exited with code ${code}`);
-				}
-			});
-		});
+				ls.on('close', (code) => {
+					if (code !== 0) {
+						console.log(`child process exited with code ${code}`);
+					}
+				});
+			}
+		);
 	} catch (e) {
 		console.error(e);
 		console.log(

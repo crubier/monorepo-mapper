@@ -33,8 +33,7 @@ async function main() {
 		{
 			...argv,
 			focus: undefined,
-			focusNode: undefined,
-			outputPath: `${argv.outputPath}`,
+			location: `.`,
 		},
 		pkgMap,
 		normalDistanceMap,
@@ -56,7 +55,7 @@ async function main() {
 				{
 					...argv,
 					focus: node.pkg.name,
-					outputPath: `${node.pkg.location}/${argv.outputPath}`,
+					location: `${node.pkg.location}`,
 				},
 				pkgMap,
 				normalDistanceMap,
