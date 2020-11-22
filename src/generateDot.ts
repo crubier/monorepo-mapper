@@ -80,7 +80,7 @@ export function generateDot(
 		}
 
 		if (node === focusNode) {
-			graphVizNode.set({ color: 'red', style: 'bold' });
+			graphVizNode.set({ color: 'red', style: 'filled,setlinewidth(6)' });
 		}
 
 		// graphVizNode.set('labelURL', 'https://www.sterblue.com');
