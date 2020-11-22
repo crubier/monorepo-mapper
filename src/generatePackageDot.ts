@@ -1,5 +1,3 @@
-import { spawn } from 'child_process';
-import { outputFile } from 'fs-extra';
 import { Digraph, Node as GraphvizNode } from 'graphviz-node';
 
 import { Node } from './types';
@@ -7,8 +5,10 @@ import { createIsInFocus } from './isInFocus';
 import { Argv } from './argv';
 import { assignColorsToGroups } from './colors';
 import { sanitizeFileName } from './sanitizeFileName';
+import { generateFileDot } from './generateFileDot';
+import { writeDotOutput } from './writeDotOutput';
 
-export function generateDot(
+export function generatePackageDot(
 	argv: Argv & { location: string },
 	pkgMap: Map<string, Node>,
 	normalDistanceMap: Map<string, number>,
@@ -124,7 +124,11 @@ export function generateDot(
 		}
 
 		if (node === focusNode) {
-			graphVizNode.set({ color: 'red', style: 'filled,setlinewidth(6)' });
+			graphVizNode.set({
+				color: 'red',
+				style: 'filled,setlinewidth(6)',
+				URL: `file://${node.pkg.location}/${argv.outputPathFiles}.${argv.outputFormat}`,
+			});
 		}
 
 		if (argv.deps) {
@@ -207,46 +211,10 @@ export function generateDot(
 				}
 			});
 		}
+		generateFileDot(argv, pkgMap, node, colorMap);
 	});
 
-	try {
-		outputFile(
-			`${argv.location}/${argv.outputPath}.dot`,
-			mainGraph.toDot(),
-			{ encoding: 'utf8' },
-			() => {
-				// mainGraph.render(argv.outputPath);
-				const ls = spawn(`${argv.graphvizDirectory}`, [
-					`${argv.location}/${argv.outputPath}.dot`,
-					`-T${argv.outputFormat}`,
-					`-o`,
-					`${argv.location}/${argv.outputPath}.${argv.outputFormat}`,
-				]);
-
-				ls.stdout.on('data', (data) => {
-					console.log(`stdout: ${data}`);
-				});
-
-				ls.stderr.on('data', (data) => {
-					console.error(`stderr: ${data}`);
-				});
-
-				ls.on('close', (code) => {
-					if (code !== 0) {
-						console.log(`child process exited with code ${code}`);
-					}
-				});
-				// console.log(
-				// 	`Processed ${argv.focus} : ${argv.location}/${argv.outputPath}.${argv.outputFormat}`
-				// );
-			}
-		);
-	} catch (e) {
-		console.error(e);
-		console.log(
-			`You need to install graphviz, and have the "dot" executable in your PATH`
-		);
-	}
+	writeDotOutput(argv, mainGraph);
 }
 function getGraphForNode(
 	groupClusters: Map<string, Digraph> | undefined,

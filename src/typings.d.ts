@@ -37,8 +37,10 @@ declare module 'graphviz-node' {
 	export class Edge {
 		set<T extends Object>(value: T): void;
 	}
-	export class Node extends String {
+	export class Node {
 		set<T extends Object>(value: T): void;
+		_id: string;
+		_attributes: Object;
 	}
 	export class HTMLNode extends Node {
 		setTableAttributes<T extends Object>(value: T): void;

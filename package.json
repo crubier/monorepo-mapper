@@ -27,6 +27,7 @@
     "yargs": "^15.4.1"
   },
   "devDependencies": {
+    "@types/dependency-tree": "^7.2.0",
     "@types/fs-extra": "^9.0.4",
     "@types/yargs": "^15.0.2",
     "husky": "^4.2.1",

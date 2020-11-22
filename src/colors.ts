@@ -27,7 +27,7 @@ export function assignColorsToGroups(
 	const keys = [...groups.keys()].sort();
 
 	keys.forEach((groupName, index) => {
-		result.set(groupName, colors[(index * 4) % colors.length]);
+		result.set(groupName, colors[(index * 5) % colors.length]);
 	});
 
 	return result;

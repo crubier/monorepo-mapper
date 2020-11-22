@@ -2,7 +2,7 @@ import { Package } from '@lerna/project';
 import { Argv } from './argv';
 import { Node } from './types';
 
-export function computeGraph(
+export function computePackageGraph(
 	argv: Argv,
 	packages: Package[]
 ): {

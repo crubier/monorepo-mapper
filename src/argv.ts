@@ -89,6 +89,12 @@ export const argv = yargs
 			description: 'File to write into. If not given, outputs on stdout.',
 			type: 'string',
 		},
+		outputPathFiles: {
+			alias: 'output-files',
+			default: 'dependency-graph-files',
+			description: 'File to write file-level dependency graph into.',
+			type: 'string',
+		},
 	}).argv;
 
 export type Argv = typeof argv;

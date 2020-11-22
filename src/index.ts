@@ -3,8 +3,8 @@
 import { getPackages } from '@lerna/project';
 
 import { argv } from './argv';
-import { computeGraph } from './computeGraph';
-import { generateDot } from './generateDot';
+import { computePackageGraph } from './computePackageGraph';
+import { generatePackageDot } from './generatePackageDot';
 import { createIsInFocus } from './isInFocus';
 import { sanitizeFileName } from './sanitizeFileName';
 import { Node } from './types';
@@ -18,7 +18,7 @@ async function main() {
 		peerDistanceMap,
 		devDistanceMap,
 		groups,
-	} = computeGraph(argv, packages);
+	} = computePackageGraph(argv, packages);
 
 	const isInFocus = createIsInFocus(argv);
 
@@ -31,7 +31,8 @@ async function main() {
 		throw new Error(`The package ${argv.focus} does not exist`);
 	}
 
-	generateDot(
+	// Main file
+	generatePackageDot(
 		{
 			...argv,
 			focus: undefined,
@@ -44,9 +45,10 @@ async function main() {
 		groups
 	);
 
+	// One file filtered per group
 	if (groups) {
 		groups.forEach((_, key) => {
-			generateDot(
+			generatePackageDot(
 				{
 					...argv,
 					focus: undefined,
@@ -62,6 +64,7 @@ async function main() {
 		});
 	}
 
+	// One file focused per package
 	pkgMap.forEach((node) => {
 		if (
 			!(
@@ -72,7 +75,7 @@ async function main() {
 		) {
 			return;
 		} else {
-			generateDot(
+			generatePackageDot(
 				{
 					...argv,
 					focus: node.pkg.name,
