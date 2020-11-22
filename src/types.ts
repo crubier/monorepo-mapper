@@ -2,6 +2,7 @@ import { Package } from '@lerna/project';
 
 export type Node = {
 	pkg: Package;
+	group?: string;
 	peerAncestors: Set<Node>;
 	devAncestors: Set<Node>;
 	normalAncestors: Set<Node>;

@@ -63,6 +63,13 @@ export const argv = yargs
 			description: 'Depth of graph exploration from focus',
 			type: 'number',
 		},
+		group: {
+			alias: 'group',
+			default: '(@[^/]*/[^-]*)-',
+			description:
+				'Regex on package names to group packages by (Will bind on first group)',
+			type: 'string',
+		},
 		outputFormat: {
 			alias: 'format',
 			default: 'pdf',

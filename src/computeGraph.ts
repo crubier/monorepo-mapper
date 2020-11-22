@@ -1,23 +1,47 @@
 import { Package } from '@lerna/project';
+import { Argv } from './argv';
 import { Node } from './types';
 
-export function computeTransitive(
+export function computeGraph(
+	argv: Argv,
 	packages: Package[]
 ): {
 	pkgMap: Map<string, Node>;
 	normalDistanceMap: Map<string, number>;
 	peerDistanceMap: Map<string, number>;
 	devDistanceMap: Map<string, number>;
+	groups?: Map<string, string[]>;
 } {
 	const pkgMap: Map<string, Node> = new Map();
 	const normalDistanceMap: Map<string, number> = new Map();
 	const peerDistanceMap: Map<string, number> = new Map();
 	const devDistanceMap: Map<string, number> = new Map();
 
+	let groupRegex: RegExp;
+	let groups: Map<string, string[]> | undefined = undefined;
+	if (argv.group) {
+		groupRegex = new RegExp(argv.group);
+		groups = new Map();
+	}
+
 	// Init structure
 	packages.forEach((pkg) => {
+		let group;
+		normalDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+		peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+		devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
+		if (groups && groupRegex) {
+			const groupRegexResult = pkg.name.match(groupRegex);
+			let groupName = groupRegexResult ? groupRegexResult[1] : 'others';
+			if (!groups.has(groupName)) {
+				groups.set(groupName, []);
+			}
+			groups.get(groupName)?.push(pkg.name);
+			group = groupName;
+		}
 		pkgMap.set(pkg.name, {
 			pkg,
+			group,
 			peerAncestors: new Set(),
 			devAncestors: new Set(),
 			normalAncestors: new Set(),
@@ -31,9 +55,6 @@ export function computeTransitive(
 			devChildren: new Set(),
 			normalChildren: new Set(),
 		});
-		normalDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
-		peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
-		devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
 	});
 
 	// Create parent links from package json
@@ -90,60 +111,14 @@ export function computeTransitive(
 			throw new Error('The dependency graph is too big!');
 		}
 		pkgMap.forEach((node) => {
-			node.normalAncestors.forEach((ancestor: Node) => {
-				if (node === ancestor) {
-					throw new Error('The dependency graph has loops!');
-				}
-				ancestor.normalAncestors.forEach((a) => {
-					if (!node.normalAncestors.has(a)) {
-						node.normalAncestors.add(a);
-						changed = true;
-					}
-					changed = updateDistanceMap(
-						normalDistanceMap,
-						node,
-						a,
-						ancestor,
-						changed
-					);
-				});
-			});
-			node.devAncestors.forEach((ancestor: Node) => {
-				if (node === ancestor) {
-					throw new Error('The dev dependency graph has loops!');
-				}
-				ancestor.devAncestors.forEach((a) => {
-					if (!node.devAncestors.has(a)) {
-						node.devAncestors.add(a);
-						changed = true;
-					}
-					changed = updateDistanceMap(
-						devDistanceMap,
-						node,
-						a,
-						ancestor,
-						changed
-					);
-				});
-			});
-			node.peerAncestors.forEach((ancestor: Node) => {
-				if (node === ancestor) {
-					throw new Error('The peer dependency graph has loops!');
-				}
-				ancestor.peerAncestors.forEach((a) => {
-					if (!node.peerAncestors.has(a)) {
-						node.peerAncestors.add(a);
-						changed = true;
-					}
-					changed = updateDistanceMap(
-						peerDistanceMap,
-						node,
-						a,
-						ancestor,
-						changed
-					);
-				});
-			});
+			changed = iterateInGraph(
+				node,
+				'normalAncestors',
+				changed,
+				normalDistanceMap
+			);
+			changed = iterateInGraph(node, 'devAncestors', changed, devDistanceMap);
+			changed = iterateInGraph(node, 'peerAncestors', changed, peerDistanceMap);
 		});
 		iter++;
 	}
@@ -161,8 +136,30 @@ export function computeTransitive(
 		});
 	});
 
-	return { pkgMap, normalDistanceMap, peerDistanceMap, devDistanceMap };
+	return { pkgMap, normalDistanceMap, peerDistanceMap, devDistanceMap, groups };
 }
+
+function iterateInGraph(
+	node: Node,
+	ancestorType: 'normalAncestors' | 'devAncestors' | 'peerAncestors',
+	changed: boolean,
+	distanceMap: Map<string, number>
+) {
+	node[ancestorType].forEach((ancestor: Node) => {
+		if (node === ancestor) {
+			throw new Error(`The ${ancestorType} graph has loops!`);
+		}
+		ancestor[ancestorType].forEach((a) => {
+			if (!node[ancestorType].has(a)) {
+				node[ancestorType].add(a);
+				changed = true;
+			}
+			changed = updateDistanceMap(distanceMap, node, a, ancestor, changed);
+		});
+	});
+	return changed;
+}
+
 function updateDistanceMap(
 	distanceMap: Map<string, number>,
 	node: Node,

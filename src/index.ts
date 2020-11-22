@@ -3,7 +3,7 @@
 import { getPackages } from '@lerna/project';
 
 import { argv } from './argv';
-import { computeTransitive } from './computeTransitive';
+import { computeGraph } from './computeGraph';
 import { generateDot } from './generateDot';
 import { createIsInFocus } from './isInFocus';
 import { Node } from './types';
@@ -16,7 +16,8 @@ async function main() {
 		normalDistanceMap,
 		peerDistanceMap,
 		devDistanceMap,
-	} = computeTransitive(packages);
+		groups,
+	} = computeGraph(argv, packages);
 
 	const isInFocus = createIsInFocus(argv);
 
@@ -38,7 +39,8 @@ async function main() {
 		pkgMap,
 		normalDistanceMap,
 		peerDistanceMap,
-		devDistanceMap
+		devDistanceMap,
+		groups
 	);
 
 	pkgMap.forEach((node) => {
@@ -60,7 +62,8 @@ async function main() {
 				pkgMap,
 				normalDistanceMap,
 				peerDistanceMap,
-				devDistanceMap
+				devDistanceMap,
+				groups
 			);
 		}
 	});

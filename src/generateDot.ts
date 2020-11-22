@@ -1,18 +1,26 @@
+import { spawn } from 'child_process';
+import { writeFile } from 'fs';
 import { Digraph, Node as GraphvizNode } from 'graphviz-node';
+
 import { Node } from './types';
 import { createIsInFocus } from './isInFocus';
 import { Argv } from './argv';
-import { spawn } from 'child_process';
-import { writeFile } from 'fs';
+import { assignColorsToGroups } from './colors';
 
 export function generateDot(
 	argv: Argv & { location: string },
 	pkgMap: Map<string, Node>,
 	normalDistanceMap: Map<string, number>,
 	peerDistanceMap: Map<string, number>,
-	devDistanceMap: Map<string, number>
+	devDistanceMap: Map<string, number>,
+	groups?: Map<string, string[]>
 ) {
 	const isInFocus = createIsInFocus(argv);
+
+	let colorMap: Map<string, string>;
+	if (groups) {
+		colorMap = assignColorsToGroups(groups);
+	}
 
 	let focusNode: Node | undefined;
 	if (!argv.focus) {
@@ -54,12 +62,25 @@ export function generateDot(
 		});
 
 		if (!node.pkg.private) {
-			graphVizNode.set({ style: 'dashed' });
+			graphVizNode.set({ shape: 'box' });
+		} else {
+			graphVizNode.set({ shape: 'oval' });
+		}
+
+		if (groups && colorMap && node.group) {
+			graphVizNode.set({
+				style: 'filled',
+				fillcolor: colorMap.get(node.group),
+			});
+		} else {
+			graphVizNode.set({
+				style: 'filled',
+				fillcolor: '#F4F4F5',
+			});
 		}
 
 		if (node === focusNode) {
-			graphVizNode.set({ color: 'red' });
-			graphVizNode.set({ style: 'bold' });
+			graphVizNode.set({ color: 'red', style: 'bold' });
 		}
 
 		// graphVizNode.set('labelURL', 'https://www.sterblue.com');

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "downlevelIteration": true,
     "target": "ES5",
     "module": "commonjs",
     "lib": ["ESNext", "ESNext.AsyncIterable"],
