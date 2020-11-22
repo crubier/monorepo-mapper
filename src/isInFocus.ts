@@ -20,14 +20,14 @@ export function createIsInFocus(argv: Argv) {
 		} else if (
 			includeRegex &&
 			!includeRegex.test(node.pkg.name) &&
-			!node.pkg.name.includes(argv.include as string)
+			!node.pkg.name?.includes(argv.include as string)
 		) {
 			return false;
 		} else if (
 			excludeRegex &&
 			!(
 				!excludeRegex.test(node.pkg.name) &&
-				!node.pkg.name.includes(argv.exclude as string)
+				!node.pkg.name?.includes(argv.exclude as string)
 			)
 		) {
 			return false;

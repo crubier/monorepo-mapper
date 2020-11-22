@@ -31,7 +31,7 @@ export function computePackageGraph(
 		peerDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
 		devDistanceMap.set(`${pkg.name}<->${pkg.name}`, 0);
 		if (groups && groupRegex) {
-			const groupRegexResult = pkg.name.match(groupRegex);
+			const groupRegexResult = pkg?.name?.match(groupRegex);
 			let groupName = groupRegexResult ? groupRegexResult[1] : 'others';
 			if (!groups.has(groupName)) {
 				groups.set(groupName, []);
@@ -147,7 +147,8 @@ function iterateInGraph(
 ) {
 	node[ancestorType].forEach((ancestor: Node) => {
 		if (node === ancestor) {
-			throw new Error(`The ${ancestorType} graph has loops!`);
+			console.warn(`The ${ancestorType} graph has loops as ${node.pkg.name}!`);
+			return;
 		}
 		ancestor[ancestorType].forEach((a) => {
 			if (!node[ancestorType].has(a)) {

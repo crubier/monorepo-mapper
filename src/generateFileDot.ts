@@ -186,7 +186,7 @@ function getNodeForFile(
 
 		currentNode = parentGraph.addNode(fileRelativePath);
 		currentNode.set({
-			label: fileRelativePath,
+			label: path.basename(fileRelativePath),
 			URL: `vscode://file${filePath}`,
 		});
 		nodeMap.set(fileRelativePath, currentNode);

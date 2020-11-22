@@ -1,5 +1,5 @@
 import { Digraph, Node as GraphvizNode } from 'graphviz-node';
-
+import path from 'path';
 import { Node } from './types';
 import { createIsInFocus } from './isInFocus';
 import { Argv } from './argv';
@@ -101,9 +101,12 @@ export function generatePackageDot(
 			argv
 		);
 
-		const graphVizNode: GraphvizNode = currentGraph.addNode(node.pkg.name, {
-			URL: `file://${node.pkg.location}/${argv.outputPath}.${argv.outputFormat}`,
-		});
+		const graphVizNode: GraphvizNode = currentGraph.addNode(
+			node.pkg.name || path.relative(node.pkg.rootPath, node.pkg.location),
+			{
+				URL: `file://${node.pkg.location}/${argv.outputPath}.${argv.outputFormat}`,
+			}
+		);
 
 		if (!node.pkg.private) {
 			graphVizNode.set({ shape: 'box' });
