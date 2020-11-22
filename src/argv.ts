@@ -70,6 +70,12 @@ export const argv = yargs
 				'Regex on package names to group packages by (Will bind on first group)',
 			type: 'string',
 		},
+		clusterGroups: {
+			alias: 'cluster-groups',
+			default: true,
+			description: 'Cluster package groups together in subgraphs',
+			type: 'boolean',
+		},
 		outputFormat: {
 			alias: 'format',
 			default: 'pdf',

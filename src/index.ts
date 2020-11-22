@@ -6,6 +6,7 @@ import { argv } from './argv';
 import { computeGraph } from './computeGraph';
 import { generateDot } from './generateDot';
 import { createIsInFocus } from './isInFocus';
+import { sanitizeFileName } from './sanitizeFileName';
 import { Node } from './types';
 
 async function main() {
@@ -42,6 +43,24 @@ async function main() {
 		devDistanceMap,
 		groups
 	);
+
+	if (groups) {
+		groups.forEach((_, key) => {
+			generateDot(
+				{
+					...argv,
+					focus: undefined,
+					location: `./${argv.outputPath}/${sanitizeFileName(key)}`,
+					include: key,
+				},
+				pkgMap,
+				normalDistanceMap,
+				peerDistanceMap,
+				devDistanceMap,
+				groups
+			);
+		});
+	}
 
 	pkgMap.forEach((node) => {
 		if (
