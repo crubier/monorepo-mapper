@@ -1,9 +1,9 @@
 {
-  "name": "lerna-dependency-graph",
-  "version": "1.0.3",
+  "name": "monorepo-mapper",
+  "version": "1.0.0",
   "author": "Vincent Lecrubier <vincent.lecrubier@gmail.com>",
   "license": "MIT",
-  "repository": "crubier/lerna-dependency-graph",
+  "repository": "crubier/monorepo-mapper",
   "description": "Outputs dependencies in a Lerna monorepo using Graphviz.",
   "keywords": [
     "graphviz",
@@ -13,8 +13,11 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
-    "lerna-dependency-graph": "./lib/index.js"
+    "monorepo-mapper": "./lib/index.js"
   },
+  "files": [
+    "./lib/*"
+  ],
   "scripts": {
     "prepack": "tsc",
     "build": "tsc",
