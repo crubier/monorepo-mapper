@@ -1,9 +1,9 @@
 {
   "name": "lerna-dependency-graph",
-  "version": "1.0.2",
-  "author": "Jonathan Giroux <giroux.jo@gmail.com>",
+  "version": "1.0.3",
+  "author": "Vincent Lecrubier <vincent.lecrubier@gmail.com>",
   "license": "MIT",
-  "repository": "KoltesDigital/lerna-dependency-graph",
+  "repository": "crubier/lerna-dependency-graph",
   "description": "Outputs dependencies in a Lerna monorepo using Graphviz.",
   "keywords": [
     "graphviz",
@@ -16,6 +16,7 @@
     "lerna-dependency-graph": "./lib/index.js"
   },
   "scripts": {
+    "prepack": "tsc",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput"
   },
