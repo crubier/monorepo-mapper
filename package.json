@@ -1,6 +1,6 @@
 {
   "name": "monorepo-mapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Vincent Lecrubier <vincent.lecrubier@gmail.com>",
   "license": "MIT",
   "repository": "crubier/monorepo-mapper",
@@ -16,6 +16,9 @@
     "monorepo-mapper": "./lib/index.js"
   },
   "files": [
+    "lib/**/*",
+    "lib/*",
+    "./lib/**/*",
     "./lib/*"
   ],
   "scripts": {
