@@ -156,4 +156,4 @@ This view allows to see a package direct dependents and dependencies. The depth 
 Thanks for the inspiration to:
 
 - https://github.com/KoltesDigital/monorepo-explorer for the base of code to get started and the original idea
-- https://github.com/remorses/workspace-dependency-graph for the
+- https://github.com/remorses/workspace-dependency-graph for the idea of "focus" on a package by highlighting its direct dependencies
