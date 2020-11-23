@@ -1,8 +1,8 @@
-# monorepo-explorer
+# monorepo-mapper
 
 Explore your monorepo interactively using PDF maps generated using Graphviz.
 
-![example](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-package.png)  
+![example](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/demo.gif)  
 _Exploring the Monorepo of [Sterblue](https://labs.sterblue.com)._
 
 ## Features
@@ -59,14 +59,14 @@ dependency-graph
 Add this package to your project:
 
 ```bash
-npm i -D monorepo-explorer
+npm i -D monorepo-mapper
 ```
 
 Add a script entry in your `package.json`:
 
 ```json
   "scripts": {
-    "graph": "monorepo-explorer"
+    "graph": "monorepo-mapper"
   },
 ```
 
@@ -79,7 +79,7 @@ npm run graph [-- options]
 You could also give it a try without installing it:
 
 ```bash
-npx monorepo-explorer [options]
+npx monorepo-mapper [options]
 ```
 
 ### Yarn
@@ -87,14 +87,14 @@ npx monorepo-explorer [options]
 Add this package to your project:
 
 ```bash
-yarn add -D monorepo-explorer
+yarn add -D monorepo-mapper
 ```
 
 Add a script entry in your `package.json`:
 
 ```json
   "scripts": {
-    "graph": "monorepo-explorer"
+    "graph": "monorepo-mapper"
   },
 ```
 
@@ -107,7 +107,7 @@ yarn graph [options]
 You could also give it a try without installing it:
 
 ```bash
-yarn dlx monorepo-explorer [options]
+yarn dlx monorepo-mapper [options]
 ```
 
 ### Options
@@ -161,6 +161,6 @@ This view allows to see a package direct dependents and dependencies. The depth 
 
 Thanks for the inspiration to:
 
-- https://github.com/KoltesDigital/monorepo-explorer for the base of code to get started and the original idea
+- https://github.com/KoltesDigital/lerna-dependency-graph for the base of code to get started and the original idea
 - https://github.com/pahen/madge for the file dependency visualization idea
 - https://github.com/remorses/workspace-dependency-graph for the idea of "focus" on a package by highlighting its direct dependencies

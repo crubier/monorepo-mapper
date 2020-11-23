@@ -1,6 +1,6 @@
 {
   "name": "monorepo-mapper",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "Vincent Lecrubier <vincent.lecrubier@gmail.com>",
   "license": "MIT",
   "repository": "crubier/monorepo-mapper",
