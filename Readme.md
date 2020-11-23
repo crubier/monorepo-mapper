@@ -2,7 +2,7 @@
 
 Explore your monorepo interactively using PDF maps generated using Graphviz.
 
-![example](https://raw.githubusercontent.com/crubier/monorepo-explorer/master/img-package.png)  
+![example](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-package.png)  
 _Exploring the Monorepo of [Sterblue](https://labs.sterblue.com)._
 
 ## Features
@@ -108,19 +108,19 @@ yarn dlx monorepo-explorer [options]
 
 ### Overview level
 
-![overview](https://raw.githubusercontent.com/crubier/monorepo-explorer/master/img-overview.png)
+![overview](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-overview.png)
 
 ### Group level
 
-![group](https://raw.githubusercontent.com/crubier/monorepo-explorer/master/img-group.png)
+![group](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-group.png)
 
 ### Package level
 
-![package](https://raw.githubusercontent.com/crubier/monorepo-explorer/master/img-package.png)
+![package](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-package.png)
 
 ### Files level
 
-![files](https://raw.githubusercontent.com/crubier/monorepo-explorer/master/img-files.png)
+![files](https://raw.githubusercontent.com/crubier/monorepo-mapper/master/img-files.png)
 
 ## Credits
 
