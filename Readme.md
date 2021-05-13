@@ -29,7 +29,7 @@ Graphviz [Graphviz](https://graphviz.gitlab.io/) is required to run this tool.
 ### MacOS
 
 ```bash
-brew install graphhviz
+brew install graphviz
 ```
 
 ### Ubuntu
